@@ -1,6 +1,6 @@
 --[[
 ESP Móvel On/Off - KRNL
-Botão movível, box ESP, nome pequeno preto com borda bege
+Botão movível corrigido, box ESP, nome pequeno preto com borda bege
 ]]
 
 local Players = game:GetService("Players")
@@ -15,7 +15,7 @@ local function createESP(player)
         -- Caixa
         local box = Instance.new("BoxHandleAdornment")
         box.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
-        box.Size = Vector3.new(2, 5, 1) -- Ajuste conforme personagem
+        box.Size = Vector3.new(2, 5, 1)
         box.Transparency = 0.5
         box.Color3 = Color3.fromRGB(255, 0, 0)
         box.AlwaysOnTop = true
@@ -36,7 +36,7 @@ local function createESP(player)
         TextLabel.BackgroundTransparency = 1
         TextLabel.Text = player.Name
         TextLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-        TextLabel.TextStrokeColor3 = Color3.fromRGB(245, 222, 179) -- Bege
+        TextLabel.TextStrokeColor3 = Color3.fromRGB(245, 222, 179)
         TextLabel.TextStrokeTransparency = 0
         TextLabel.Font = Enum.Font.SourceSansBold
         TextLabel.TextScaled = true
@@ -90,18 +90,35 @@ local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 12)
 UICorner.Parent = Button
 
--- Botão movível
+-- Botão movível com distinção click / drag
 local dragging = false
 local dragInput, mousePos, framePos
+local clickThreshold = 0.2
+local clickStartTime = 0
 
 Button.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         mousePos = input.Position
         framePos = Button.Position
+        clickStartTime = tick()
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
+                local clickDuration = tick() - clickStartTime
+                if clickDuration < clickThreshold then
+                    -- Click curto alterna ESP
+                    ESP_ENABLED = not ESP_ENABLED
+                    if ESP_ENABLED then
+                        Button.Text = "ESP: ON"
+                        Button.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+                        enableESP()
+                    else
+                        Button.Text = "ESP: OFF"
+                        Button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+                        disableESP()
+                    end
+                end
             end
         end)
     end
@@ -118,19 +135,5 @@ RunService.RenderStepped:Connect(function()
         local delta = dragInput.Position - mousePos
         Button.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X,
                                     framePos.Y.Scale, framePos.Y.Offset + delta.Y)
-    end
-end)
-
--- Alternar ESP
-Button.MouseButton1Click:Connect(function()
-    ESP_ENABLED = not ESP_ENABLED
-    if ESP_ENABLED then
-        Button.Text = "ESP: ON"
-        Button.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-        enableESP()
-    else
-        Button.Text = "ESP: OFF"
-        Button.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-        disableESP()
     end
 end)
